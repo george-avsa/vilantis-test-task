@@ -13,12 +13,11 @@ export default async function getData(body) {
                 "X-Auth": md5(`Valantis_${getTimestamp()}`)
             }
         });
-        
+
         return response.data;
 
     } catch (e) {
         console.error(e.toString());
         return await getData(body);
     }
-
-} 
+}
