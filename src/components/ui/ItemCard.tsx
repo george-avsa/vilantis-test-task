@@ -7,7 +7,7 @@ export default function ItemCard(props: {item: Item}) {
           {props.item.brand && (
             <p className='text-base'>{props.item.brand}</p>
           )}
-          <span className='text-xs text-slate-400'>{props.item.id}</span>
+          {/* <span className='text-xs text-slate-400'>{props.item.id}</span> */}
         </div>
         <h3 className='text-xl'>{props.item.product}</h3>
         <p className='text-right text-lg mt-2 text-slate-700 font-semibold flex-1 flex items-end justify-end'>{props.item.price} р</p>

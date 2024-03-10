@@ -2,10 +2,14 @@ import React, { Dispatch, FormEvent, SetStateAction, useEffect } from "react";
 import Arrow from './../assets/down-arrow.svg';
 import { useSearchParams } from "react-router-dom";
 import { parseUrlParams } from "../helpers/parseUrlParams";
+import { stringifyParams } from "../helpers/stringifyParams";
+import { getItems } from "../api/getItems";
+import { getUnique } from "../helpers/getUnique";
 
 type PageControllerProps = {
     page: number,
     setPage: Dispatch<SetStateAction<number>>,
+    setItems: Dispatch<SetStateAction<Item[]>>,
     additionalClasses?: string;
 };
 
@@ -15,15 +19,28 @@ export default function PageController(props: PageControllerProps) {
   const additionalClasses = props.additionalClasses ? props.additionalClasses : '';
 
 
-  const handleDecremenet = () => {
+  const handleDecremenet = async () => {
     if (props.page > 1) {
-      console.log(parseUrlParams(params))
+      const parsedParams = parseUrlParams(params) || {};
       props.setPage((page) => page - 1);
+      setParams(stringifyParams({...parsedParams, page: props.page - 1}));
+
+      // props.setItems([]);
+      // const data = await getItems('decrement');
+      // const items = getUnique(data.result) as Item[];
+      // props.setItems(items);
     }
   }
 
-  const handleIncremenet = () => {
+  const handleIncremenet = async () => {
+    const parsedParams = parseUrlParams(params) || {};
     props.setPage((page) => page + 1);
+    setParams(stringifyParams({...parsedParams, page: props.page + 1}));
+
+    // props.setItems([]);
+    // const data = await getItems('increment');
+    // const items = getUnique(data.result) as Item[];
+    // props.setItems(items);
   }
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
