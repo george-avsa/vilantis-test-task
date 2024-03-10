@@ -1,8 +1,17 @@
 import { getRequestBody } from '../helpers/getRequestBody.js';
 import getData from './getData.js';
 
-let tolsta = [];
 export class Pages {
+    initial: boolean;
+    filter: null;
+    page: number;
+    idsByPage: {};
+    offsetPrev: number;
+    offsetNext: number;
+    offset: number;
+    limit: number;
+    idsForPage: any[];
+
     constructor(offset=0, limit=50, page=0) {
         this.initial = true;
 
@@ -67,7 +76,6 @@ export class Pages {
                 this.idsByPage[this.page] = this.idsForPage;
                 this.offset += this.offsetNext;
                 this.offsetNext = 0;
-                tolsta = [...tolsta, ...this.idsForPage];
                 this.idsForPage = [];
                 return this.idsByPage[this.page];
             }
