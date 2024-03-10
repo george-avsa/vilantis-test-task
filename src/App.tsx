@@ -1,73 +1,69 @@
 import React, { useEffect, useState } from 'react';
 import PageController from './components/PageController';
-import Radio from './components/ui/Radio';
-import Filter from './components/Filter';
 import ItemList from './components/ItemList';
 import Loader from './components/ui/Loader';
-import { pages } from '.';
-import getData from './api/getData';
 import { getItems } from './api/getItems';
 import { getUnique } from './helpers/getUnique';
 import { useSearchParams } from 'react-router-dom';
+import { pages } from '.';
+import FilterForm from './components/FilterForm';
 
-type Filter = string | null | undefined;
-type Offset = number | undefined;
+export type FilterType = string | null | undefined;
+export type FilterFormType = {
+  filter: string;
+  filterValue: string | number;
+} | null;
 
 export default function App() {
   
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<Item[]>([]);
 
   const [page, setPage] = useState<number>(1);
   const [params, setParams] = useSearchParams();
   
-  const [filter, setFilter] = useState<Filter>();
-  const [offset, setOffset] = useState<Offset>();
+  const [filter, setFilter] = useState<FilterType>();
+  const [filterValue, setFilterValue] = useState<string>('');
+
+  const [filterForm, setFilterForm] = useState<FilterFormType>(null);
 
   useEffect(() => {
-    setFilter(params.get('fitler') || null);
-    const page = Number.parseInt(params.get('page') || '') || 1;
-    const offset = Number.parseInt(params.get('offset') || '') || 0;
-    setPage(page);
-    setOffset(offset);
-  }, []);
-  
-  useEffect(() => {
-    if ((filter || filter === null) && page && (offset || offset === 0)) {
-      const getItemsEffect = async () => {
-        const data = await getItems('increment');
-        const items = getUnique(data.result) as Item[];
-        setItems(items);
-      };
-      console.log(filter, page, offset);
-      if (!items.length) {
-        getItemsEffect()
-        .catch(e => {
-          console.error(e.toString());
-        })
+    const getData = async () => {
+      setItems([]);
+      const pageString = params.get("page") || '';
+      const page = Number.parseInt(pageString) || 1;
+
+      let filterLocal = null;
+      if (filter && filterValue) {
+        filterLocal = {[filter]: filterValue};
       }
+
+      const response = await pages.getPage(page, filterLocal);
+
+      if (response.ids && response.ids.length) {
+        const data = await getItems(response.ids || []);
+        setItems(getUnique(data.result));
+      } else {
+        setItems([]);
+      }
+
+      
     }
-    }, [offset, page, filter]);
-    
-    
-    useEffect(() => {
-    const pageString = params.get('page') || '';
-    const pageInt = Number.parseInt(pageString) || 1;
-    setPage(pageInt);
-  }, []);
+
+    getData().catch(e => {console.error(e.toString())})
+  }, [page, filterForm]);
 
   return (
     <div className='min-h-screen flex flex-col py-8'>
 
-    <PageController page={page} setPage={setPage}></PageController>
-    
-    <form className='container mx-auto px-5 md:px-0 mt-6'>
-      <div className='flex flex-col md:flex-row'>
-        <Radio label='По бренду' group='filter' type='brand'></Radio>
-        <Radio label='По цене' group='filter' type='price' additionalClass='ml-0 md:ml-2'></Radio>
-        <Radio label='По названию' group='filter' type='name' additionalClass='ml-0 md:ml-2'></Radio>
-      </div>
-      <Filter></Filter>
-    </form>
+    <PageController setItems={setItems} page={page} setPage={setPage}></PageController>
+
+    <FilterForm 
+      filter={filter}
+      setFilterForm={setFilterForm}
+      setFilter={setFilter}
+      filterValue={filterValue}
+      setFilterValue={setFilterValue}
+    ></FilterForm>
 
     <>
       {items.length ? (
@@ -77,7 +73,7 @@ export default function App() {
       )}
     </>
 
-    <PageController additionalClasses="mt-3" page={page} setPage={setPage}></PageController>
+    <PageController setItems={setItems} additionalClasses="mt-3" page={page} setPage={setPage}></PageController>
     </div>
   )
 }

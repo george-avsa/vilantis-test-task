@@ -2,15 +2,6 @@ import { getRequestBody } from '../helpers/getRequestBody.js';
 import getData from './getData.js';
 
 export class Pages {
-    initial: boolean;
-    filter: null;
-    page: number;
-    idsByPage: {};
-    offsetPrev: number;
-    offsetNext: number;
-    offset: number;
-    limit: number;
-    idsForPage: any[];
 
     constructor(offset=0, limit=50, page=0) {
         this.initial = true;
@@ -20,10 +11,41 @@ export class Pages {
         this.page = page,
         this.idsByPage = {},
         this.offsetNext = 0;
+        this.offsetPrev = 0;
         this.offset = offset;
         this.limit = limit;
         this.idsByPage = {};
         this.idsForPage = [];
+    }
+
+    getPage = async (page=1, filter=null) => {
+        
+        const direction = page - this.page >= 0 ? 'increment' : 'decrement';
+        this.idsForPage = [];
+        if (filter) {
+            this.filter = filter;
+            this.idsByPage = {};
+        }
+
+        if (filter !== null && Object.keys(filter)?.length) {
+            if (filter.price) {
+                filter.price = Number.parseInt(filter.price) || 0;
+            }
+            const objectByPages = await pages.getFilteredPages(filter);
+            return await pages.getFilteredPage(page, objectByPages);
+        } else {
+            this.filter = null;
+            if (direction === 'increment') {
+                return this.getNextPage();
+            } else {
+                return await this.getPrevPage();
+            }
+        }
+    }
+
+    setParams = (page=1, offset=50) => {
+        this.page = page;
+        this.offset = offset;
     }
     
     setFilter = (filter) => {
@@ -33,14 +55,15 @@ export class Pages {
         this.page = 0;
     }
 
-    getFilteredPages = async () => {
-        const data = await getData(getRequestBody(this.filter));
+    getFilteredPages = async (filter) => {
+        const data = await getData({action: "filter", params: filter});
         const uniqueIds = Array.from(new Set(data.result));
         let offset = 0;
         for (let i = 1; i <= Math.ceil(uniqueIds.length / this.limit); ++i) {
-            this.idsByPage[i] = uniqueIds.slice(offset, offset + this.limit);
+            this.idsByPage[i] = {ids: uniqueIds.slice(offset, offset + this.limit), offset: null};
             offset += this.limit;
         }
+        return this.idsByPage;
     }
 
     setPage = (increment=true) => {
@@ -51,11 +74,11 @@ export class Pages {
         }
     }
 
-    getFilteredPage = (page) => {
-        if (page && this.idsByPage[page]) {
-            return this.idsByPage[page];
+    getFilteredPage = (page, objectByPages) => {
+        if (page && objectByPages[page]) {
+            return objectByPages[page];
         } else {
-            return [];
+            return objectByPages['1'];
         }
     }
     
@@ -73,7 +96,8 @@ export class Pages {
             } else {
                 this.offsetNext = 0;
                 await this.getIds(1);
-                this.idsByPage[this.page] = this.idsForPage;
+                this.idsByPage[this.page] = {ids: this.idsForPage, newOffset: this.offset};
+                // this.idsByPage[this.page].offset = this.offset;
                 this.offset += this.offsetNext;
                 this.offsetNext = 0;
                 this.idsForPage = [];
@@ -89,7 +113,8 @@ export class Pages {
         } else {
             this.offsetPrev = 0;
             await this.getIds(0, this.offset - this.limit);
-            this.idsByPage[this.page] = this.idsForPage;
+            this.idsByPage[this.page] = {ids: this.idsForPage, newOffset: this.offset};
+            // this.idsByPage[this.page].offset = this.offset;
             this.offset += this.offsetPrev;
             this.offsetPrev = 0;
             this.idsForPage = [];
@@ -98,6 +123,7 @@ export class Pages {
     }
     
     getIds = async (type, offset=this.offset, limit=this.limit) => {
+        
         this.offsetNext += limit;
         this.offsetPrev -= limit;
         const data = await getData(getRequestBody(null, offset, limit));

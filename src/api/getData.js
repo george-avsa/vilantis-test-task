@@ -5,7 +5,6 @@ import md5 from "js-md5";
 export default async function getData(body) {
 
     const url = 'https://api.valantis.store:41000/';
-    
     try {
         const response = await axios.post(url, body, {
             headers: {
