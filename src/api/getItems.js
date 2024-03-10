@@ -1,13 +1,16 @@
-import getData from "./api/getData.js";
-import { pages } from "./api/pages.js"
+import { pages } from "../index.tsx";
+import getData from "./getData.js";
 
-async function getItems(direction) {
+
+export async function getItems(direction) {
     let ids = [];
     if (direction === 'increment') {
         ids = await pages.getNextPage();
     } else {
         ids = await pages.getPrevPage();
     }
+
+    console.log(ids.length);
 
     const data = await getData({
         "action": "get_items",
