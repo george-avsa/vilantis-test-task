@@ -1,3 +1,21 @@
+# English
+### Vilantis test task
+
+The project is available at [Github Pages](https://george-avsa.github.io/vilantis-test-task/)
+
+To implement page-by-page queries, I considered 2 options:
+
+ - make a page-by-page request using offset, do a duplicate check and, if necessary, make an additional request so that there are 50 records
+ - get a list of all IDs at once, eliminate duplicates and create an object that stores a list of IDs for the desired page.
+As a result, the first method was implemented (without a filter): there are few duplicates, but a lot of records, storing all this with the user is not the best idea. There is a problem with the correct offset calculation, for example, the case with the first page: 49 unique ids out of 50, respectively, you need to make 1 more request to get an additional ID. That is:
+ - 1 page: offset: 0, limit: 51
+ - 2 page: offset: 51, limit: 50 And so on.
+
+axios is used to work with queries, which already implements the status code check, and the code looks more concise. The getData function uses axios.post, when an error occurs, it is recursively called (including when the status code is not 2xx) until the 2xx status arrives or the function is called 5 times. Each error is output by console.error, and when 5 errors are reached, a connection error is displayed to the user.
+
+
+# Russian
+
 ### Ссылка на Github Pages
 [Посмотреть проект можно по ссылке](#)
 
